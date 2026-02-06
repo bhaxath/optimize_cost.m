@@ -1,0 +1,38 @@
+% BMW Cost Optimization using Newton-Raphson
+clc; clear; close all;
+
+% Parameters
+D = 50000; S = 5000; H = 3000;
+alpha = 100; beta = 0.001;
+
+% Functions (Inline)
+TC = @(Q) (D*S./Q) + (H*Q/2) + alpha*(exp(beta*Q) - 1);
+f = @(Q) -(D*S)./(Q.^2) + (H/2) + alpha*beta*exp(beta*Q); % First Deriv
+f_prime = @(Q) (2*D*S)./(Q.^3) + alpha*beta^2*exp(beta*Q); % Second Deriv
+
+% Newton-Raphson Loop
+Q = 200; % Initial Guess
+tol = 1e-6;
+max_iter = 100;
+
+fprintf('Iteration \t Q \t\t Total Cost\n');
+for i = 1:max_iter
+    Q_new = Q - f(Q)/f_prime(Q);
+    
+    fprintf('%d \t\t %.4f \t %.2f\n', i, Q_new, TC(Q_new));
+    
+    if abs(Q_new - Q) < tol
+        break;
+    end
+    Q = Q_new;
+end
+
+% Plotting
+Q_range = 100:10:1000;
+plot(Q_range, TC(Q_range), 'LineWidth', 2);
+hold on;
+plot(Q, TC(Q), 'ro', 'MarkerSize', 10, 'MarkerFaceColor', 'r');
+title('Optimization of BMW Production Batch Size');
+xlabel('Batch Size (Q)');
+ylabel('Total Cost (EUR)');
+grid on;
