@@ -1,0 +1,46 @@
+% Predictive Maintenance: Euler vs Runge-Kutta 4
+clc; clear; close all;
+
+% Parameters
+t_end = 2000; % Hours
+h = 100;      % Step size
+t = 0:h:t_end;
+n = length(t);
+
+% Initialize
+w_euler = zeros(1, n);
+w_rk4 = zeros(1, n);
+
+% Differential Equation Function
+wear_rate = @(t, w) 1e-6 * (1 + sin(t)^2) * (1 + 0.1*w);
+
+% Simulation Loop
+for i = 1:n-1
+    ti = t(i);
+    
+    % Euler Method
+    w_euler(i+1) = w_euler(i) + h * wear_rate(ti, w_euler(i));
+    
+    % Runge-Kutta 4 Method
+    wi = w_rk4(i);
+    k1 = h * wear_rate(ti, wi);
+    k2 = h * wear_rate(ti + 0.5*h, wi + 0.5*k1);
+    k3 = h * wear_rate(ti + 0.5*h, wi + 0.5*k2);
+    k4 = h * wear_rate(ti + h, wi + k3);
+    
+    w_rk4(i+1) = wi + (1/6)*(k1 + 2*k2 + 2*k3 + k4);
+end
+
+% Plotting
+plot(t, w_euler, '--r', 'LineWidth', 1.5); hold on;
+plot(t, w_rk4, '-b', 'LineWidth', 1.5);
+legend('Euler Method', 'Runge-Kutta 4');
+title('Comparison of Numerical Methods for Robot Wear');
+xlabel('Time (Hours)');
+ylabel('Wear Level (microns)');
+grid on;
+
+% Error Calculation
+fprintf('Final Wear (Euler): %.6f\n', w_euler(end));
+fprintf('Final Wear (RK4): %.6f\n', w_rk4(end));
+fprintf('Error Magnitude: %.6f\n', abs(w_rk4(end) - w_euler(end)));
