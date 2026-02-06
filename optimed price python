@@ -1,0 +1,69 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+
+# --- 1. Define Parameters based on BMW Case Study ---
+D = 50000       # Annual Demand (units)
+S = 5000        # Setup Cost per batch (Euro)
+H = 3000        # Holding Cost per unit per year (Euro)
+alpha = 100     # Penalty coefficient
+beta = 0.001    # Penalty exponent factor
+
+# --- 2. Define the Cost Functions ---
+def total_cost(Q):
+    # TC = Setup + Holding + Non-Linear Penalty
+    return (D * S / Q) + (H * Q / 2) + alpha * (math.exp(beta * Q) - 1)
+
+def marginal_cost(Q):
+    # First Derivative (f(Q) for Newton-Raphson)
+    # d(TC)/dQ = -DS/Q^2 + H/2 + alpha*beta*e^(beta*Q)
+    return -(D * S) / (Q**2) + (H / 2) + alpha * beta * math.exp(beta * Q)
+
+def second_derivative(Q):
+    # Second Derivative (f'(Q) for Newton-Raphson)
+    # d2(TC)/dQ2 = 2DS/Q^3 + alpha*beta^2*e^(beta*Q)
+    return (2 * D * S) / (Q**3) + alpha * (beta**2) * math.exp(beta * Q)
+
+# --- 3. Newton-Raphson Algorithm ---
+def optimize_batch_size(initial_guess, tolerance=1e-6, max_iter=100):
+    Q = initial_guess
+    print(f"{'Iteration':<10} {'Q (Batch Size)':<20} {'Total Cost':<20} {'Error'}")
+    print("-" * 65)
+    
+    for i in range(max_iter):
+        f_val = marginal_cost(Q)
+        f_prime_val = second_derivative(Q)
+        
+        # Newton Update Rule: Q_new = Q_old - f(Q) / f'(Q)
+        if f_prime_val == 0:
+            print("Derivative is zero. Stopping.")
+            break
+            
+        Q_new = Q - (f_val / f_prime_val)
+        error = abs(Q_new - Q)
+        
+        print(f"{i+1:<10} {Q_new:<20.4f} {total_cost(Q_new):<20.2f} {error:.6f}")
+        
+        if error < tolerance:
+            print("-" * 65)
+            return Q_new
+        
+        Q = Q_new
+    return Q
+
+# --- 4. Execute and Plot ---
+optimal_Q = optimize_batch_size(initial_guess=200)
+
+# Generate Plot for Essay
+Q_values = np.linspace(100, 1000, 100)
+costs = [total_cost(q) for q in Q_values]
+
+plt.figure(figsize=(10, 6))
+plt.plot(Q_values, costs, label='Total Cost Curve', color='blue')
+plt.plot(optimal_Q, total_cost(optimal_Q), 'ro', label=f'Optimal Q = {optimal_Q:.2f}')
+plt.title('BMW i7 Production Cost Minimization')
+plt.xlabel('Batch Size (Q)')
+plt.ylabel('Total Annual Cost (€)')
+plt.legend()
+plt.grid(True)
+plt.show()
